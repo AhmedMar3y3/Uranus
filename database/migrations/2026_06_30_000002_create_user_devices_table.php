@@ -1,0 +1,40 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (Schema::hasTable('user_devices')) {
+            Schema::table('user_devices', function (Blueprint $table) {
+                if (! Schema::hasColumn('user_devices', 'fcm_token_hash')) {
+                    $table->string('fcm_token_hash', 64)->nullable()->after('fcm_token');
+                    $table->unique('fcm_token_hash', 'user_devices_fcm_token_hash_unique');
+                }
+            });
+
+            return;
+        }
+
+        Schema::create('user_devices', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->text('fcm_token');
+            $table->string('fcm_token_hash', 64)->unique();
+            $table->string('platform')->nullable();
+            $table->string('device_name')->nullable();
+            $table->timestamp('last_used_at')->nullable();
+            $table->timestamps();
+
+            $table->index(['user_id', 'last_used_at']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('user_devices');
+    }
+};

@@ -18,7 +18,7 @@ class AuthController extends ApiController
 
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
-        $this->auth->sendOtp($request->validated('email'));
+        $this->auth->sendOtp($request->validated('email'), $request->validated());
 
         return $this->resetResponse()
             ->setSuccess(StatusCodesEnum::SUCCESS->value, __('messages.code_sent_successfully'))

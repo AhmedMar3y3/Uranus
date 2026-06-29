@@ -4,6 +4,7 @@ namespace App\Features\Friends\Services;
 
 use App\Enums\FriendshipStatus;
 use App\Features\Friends\Repositories\FriendshipRepository;
+use App\Features\Notifications\Services\FirebaseNotificationService;
 use App\Models\Friendship;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -12,8 +13,10 @@ use Illuminate\Validation\ValidationException;
 
 class FriendshipService
 {
-    public function __construct(private readonly FriendshipRepository $friendships)
-    {
+    public function __construct(
+        private readonly FriendshipRepository $friendships,
+        private readonly FirebaseNotificationService $notifications,
+    ) {
     }
 
     public function sendRequest(User $requester, User $addressee): Friendship
@@ -34,10 +37,34 @@ class FriendshipService
                     'status' => FriendshipStatus::Pending,
                 ]);
 
-                return $existing->refresh();
+                $friendship = $existing->refresh();
+                $this->notifications->sendToUser(
+                    $addressee,
+                    'New friend request',
+                    ($requester->full_name ?: $requester->username ?: 'Someone') . ' sent you a friend request',
+                    [
+                        'type' => 'friend.requested',
+                        'friendship_id' => $friendship->id,
+                        'user_id' => $requester->id,
+                    ]
+                );
+
+                return $friendship;
             }
 
-            return $this->friendships->createRequest($requester, $addressee);
+            $friendship = $this->friendships->createRequest($requester, $addressee);
+            $this->notifications->sendToUser(
+                $addressee,
+                'New friend request',
+                ($requester->full_name ?: $requester->username ?: 'Someone') . ' sent you a friend request',
+                [
+                    'type' => 'friend.requested',
+                    'friendship_id' => $friendship->id,
+                    'user_id' => $requester->id,
+                ]
+            );
+
+            return $friendship;
         });
     }
 
@@ -52,6 +79,16 @@ class FriendshipService
             }
 
             $friendship->update(['status' => FriendshipStatus::Accepted]);
+            $this->notifications->sendToUser(
+                $requester,
+                'Friend request accepted',
+                ($user->full_name ?: $user->username ?: 'Someone') . ' accepted your friend request',
+                [
+                    'type' => 'friend.accepted',
+                    'friendship_id' => $friendship->id,
+                    'user_id' => $user->id,
+                ]
+            );
 
             return $friendship->refresh();
         });
@@ -68,6 +105,16 @@ class FriendshipService
             }
 
             $friendship->update(['status' => FriendshipStatus::Rejected]);
+            $this->notifications->sendToUser(
+                $requester,
+                'Friend request rejected',
+                ($user->full_name ?: $user->username ?: 'Someone') . ' rejected your friend request',
+                [
+                    'type' => 'friend.rejected',
+                    'friendship_id' => $friendship->id,
+                    'user_id' => $user->id,
+                ]
+            );
 
             return $friendship->refresh();
         });
@@ -112,6 +159,16 @@ class FriendshipService
                 'blocked_by_id' => $user->id,
                 'status' => FriendshipStatus::Blocked,
             ]);
+            $this->notifications->sendToUser(
+                $blockedUser,
+                'User blocked',
+                ($user->full_name ?: $user->username ?: 'Someone') . ' blocked you',
+                [
+                    'type' => 'friend.blocked',
+                    'friendship_id' => $friendship->id,
+                    'user_id' => $user->id,
+                ]
+            );
 
             return $friendship->refresh();
         });

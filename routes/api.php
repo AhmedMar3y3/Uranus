@@ -5,6 +5,7 @@ use App\Features\Auth\Controllers\AuthController;
 use App\Features\Chat\Controllers\ConversationController;
 use App\Features\Chat\Controllers\MessageController;
 use App\Features\Friends\Controllers\FriendController;
+use App\Features\Notifications\Controllers\DeviceTokenController;
 use App\Features\Presence\Controllers\PresenceController;
 use App\Features\Profile\Controllers\ProfileController;
 use App\Features\Users\Controllers\UserController;
@@ -58,5 +59,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('presence')->group(function () {
         Route::post('/online' , [PresenceController::class, 'online'])->name('presence.online');
         Route::post('/offline', [PresenceController::class, 'offline'])->name('presence.offline');
+    });
+
+    Route::prefix('devices')->group(function () {
+        Route::post('/fcm-token', [DeviceTokenController::class, 'store'])->name('devices.fcm-token.store');
+        Route::delete('/fcm-token', [DeviceTokenController::class, 'destroy'])->name('devices.fcm-token.destroy');
     });
 });

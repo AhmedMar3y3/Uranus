@@ -4,6 +4,7 @@ namespace App\Features\Auth\Services;
 
 use App\Features\Auth\Mail\LoginOtpMail;
 use App\Features\Auth\Repositories\UserRepository;
+use App\Features\Notifications\Services\DeviceTokenService;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -12,15 +13,17 @@ use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
-    public function __construct(private readonly UserRepository $users)
-    {
+    public function __construct(
+        private readonly UserRepository $users,
+        private readonly DeviceTokenService $deviceTokens,
+    ) {
     }
 
-    public function sendOtp(string $email): void
+    public function sendOtp(string $email, array $deviceData = []): void
     {
         $plainOtp = (string) random_int(100000, 999999);
 
-        DB::transaction(function () use ($email, $plainOtp) {
+        DB::transaction(function () use ($email, $plainOtp, $deviceData) {
             $user = $this->users->findOrCreateByEmail($email);
 
             $this->users->updateOtp(
@@ -28,6 +31,10 @@ class AuthService
                 Hash::make($plainOtp),
                 now()->addMinutes(5)
             );
+
+            if (! empty($deviceData['fcm_token'])) {
+                $this->deviceTokens->store($user, $deviceData);
+            }
 
             Mail::to($user->email)->send(new LoginOtpMail($plainOtp));
         });

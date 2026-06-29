@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Features\Auth\Requests;
+namespace App\Features\Notifications\Requests;
 
 use App\Http\Requests\BaseRequest;
 use Illuminate\Validation\Rule;
 
-class SendOtpRequest extends BaseRequest
+class StoreDeviceTokenRequest extends BaseRequest
 {
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email:rfc', 'max:255'],
-            'fcm_token' => ['nullable', 'string', 'max:4096'],
+            'fcm_token' => ['required', 'string', 'max:4096'],
             'platform' => ['nullable', Rule::in(['ios', 'android', 'web'])],
             'device_name' => ['nullable', 'string', 'max:120'],
         ];

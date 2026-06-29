@@ -9,6 +9,7 @@ use App\Features\Chat\Events\TypingStatusChanged;
 use App\Features\Chat\Repositories\ConversationRepository;
 use App\Features\Chat\Repositories\MessageRepository;
 use App\Features\Friends\Services\FriendshipService;
+use App\Features\Notifications\Services\FirebaseNotificationService;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\TypingIndicator;
@@ -25,6 +26,7 @@ class ChatService
         private readonly ConversationRepository $conversations,
         private readonly MessageRepository $messages,
         private readonly FriendshipService $friendships,
+        private readonly FirebaseNotificationService $notifications,
     ) {
     }
 
@@ -91,6 +93,17 @@ class ChatService
             $conversation->update(['latest_message_at' => $message->created_at]);
 
             broadcast(new MessageSent($message))->toOthers();
+            $this->notifications->sendToUser(
+                $friend,
+                $user->full_name ?: $user->username ?: 'New message',
+                $this->messageNotificationBody($message),
+                [
+                    'type' => 'message.sent',
+                    'conversation_id' => $conversation->id,
+                    'message_id' => $message->id,
+                    'sender_id' => $user->id,
+                ]
+            );
 
             return $message;
         });
@@ -113,6 +126,17 @@ class ChatService
             $message->update(['body' => $body, 'edited_at' => now()]);
             $message = $message->refresh()->load(['sender', 'replyTo.sender']);
             broadcast(new MessageUpdated($message, 'message.edited'))->toOthers();
+            $this->notifications->sendToUser(
+                $conversation->otherUser($user),
+                'Message edited',
+                ($user->full_name ?: $user->username ?: 'Someone') . ' edited a message',
+                [
+                    'type' => 'message.edited',
+                    'conversation_id' => $conversation->id,
+                    'message_id' => $message->id,
+                    'sender_id' => $user->id,
+                ]
+            );
 
             return $message;
         });
@@ -134,6 +158,17 @@ class ChatService
 
             $message->delete();
             broadcast(new MessageUpdated($message, 'message.deleted'))->toOthers();
+            $this->notifications->sendToUser(
+                $conversation->otherUser($user),
+                'Message deleted',
+                ($user->full_name ?: $user->username ?: 'Someone') . ' deleted a message',
+                [
+                    'type' => 'message.deleted',
+                    'conversation_id' => $conversation->id,
+                    'message_id' => $message->id,
+                    'sender_id' => $user->id,
+                ]
+            );
         });
     }
 
@@ -180,5 +215,15 @@ class ChatService
 
             return $message;
         });
+    }
+
+    private function messageNotificationBody(Message $message): string
+    {
+        return match ($message->type) {
+            MessageType::Image => 'Sent an image',
+            MessageType::File => 'Sent a file',
+            MessageType::Audio => 'Sent a voice message',
+            default => $message->body ?: 'Sent a message',
+        };
     }
 }

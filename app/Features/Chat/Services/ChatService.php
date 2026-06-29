@@ -1,0 +1,183 @@
+<?php
+
+namespace App\Features\Chat\Services;
+
+use App\Enums\MessageType;
+use App\Features\Chat\Events\MessageSent;
+use App\Features\Chat\Events\MessageUpdated;
+use App\Features\Chat\Events\TypingStatusChanged;
+use App\Features\Chat\Repositories\ConversationRepository;
+use App\Features\Chat\Repositories\MessageRepository;
+use App\Features\Friends\Services\FriendshipService;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\TypingIndicator;
+use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+
+class ChatService
+{
+    public function __construct(
+        private readonly ConversationRepository $conversations,
+        private readonly MessageRepository $messages,
+        private readonly FriendshipService $friendships,
+    ) {
+    }
+
+    public function conversations(User $user, int $perPage): LengthAwarePaginator
+    {
+        return $this->conversations->forUser($user, $perPage);
+    }
+
+    public function startConversation(User $user, User $friend): Conversation
+    {
+        if (! $this->friendships->areFriends($user, $friend)) {
+            throw ValidationException::withMessages(['user_id' => __('messages.only_friends_can_chat')]);
+        }
+
+        return $this->conversations->firstOrCreate($user, $friend)->load(['userOne', 'userTwo', 'lastMessage.sender']);
+    }
+
+    public function messages(User $user, int $conversationId, int $perPage): LengthAwarePaginator
+    {
+        $conversation = $this->conversations->findForUser($user, $conversationId);
+
+        return $this->messages->paginate($conversation, $perPage);
+    }
+
+    public function send(User $user, int $conversationId, array $data): Message
+    {
+        return DB::transaction(function () use ($user, $conversationId, $data) {
+            $conversation = $this->conversations->findForUser($user, $conversationId);
+            $friend = $conversation->otherUser($user);
+
+            if (! $this->friendships->areFriends($user, $friend)) {
+                throw ValidationException::withMessages(['conversation_id' => __('messages.only_friends_can_chat')]);
+            }
+
+            $payload = [
+                'type' => $data['type'],
+                'body' => $data['body'] ?? null,
+                'reply_to_message_id' => $data['reply_to_message_id'] ?? null,
+            ];
+
+            if (($data['attachment'] ?? null) instanceof UploadedFile) {
+                $attachment = $data['attachment'];
+
+                if ($payload['type'] === MessageType::Image->value && ! str_starts_with((string) $attachment->getMimeType(), 'image/')) {
+                    throw ValidationException::withMessages(['attachment' => __('validation.image', ['attribute' => 'attachment'])]);
+                }
+
+                $payload['attachment_path'] = $attachment->store('messages/attachments', 'public');
+                $payload['attachment_name'] = $attachment->getClientOriginalName();
+                $payload['attachment_mime'] = $attachment->getClientMimeType();
+                $payload['attachment_size'] = $attachment->getSize();
+            }
+
+            if (($payload['type'] === MessageType::Text->value) && ! $payload['body']) {
+                throw ValidationException::withMessages(['body' => __('validation.required', ['attribute' => 'body'])]);
+            }
+
+            if (($payload['reply_to_message_id'] ?? null) && ! $conversation->messages()->whereKey($payload['reply_to_message_id'])->exists()) {
+                throw ValidationException::withMessages(['reply_to_message_id' => __('messages.message_not_found')]);
+            }
+
+            $message = $this->messages->create($conversation, $user, $payload)->load(['sender', 'replyTo.sender']);
+            $conversation->update(['latest_message_at' => $message->created_at]);
+
+            broadcast(new MessageSent($message))->toOthers();
+
+            return $message;
+        });
+    }
+
+    public function edit(User $user, int $conversationId, int $messageId, string $body): Message
+    {
+        return DB::transaction(function () use ($user, $conversationId, $messageId, $body) {
+            $conversation = $this->conversations->findForUser($user, $conversationId);
+            $message = $this->messages->findForConversation($conversation, $messageId);
+
+            if ($message->sender_id !== $user->id) {
+                throw ValidationException::withMessages(['message_id' => __('messages.message_action_not_allowed')]);
+            }
+
+            if ($message->type !== MessageType::Text) {
+                throw ValidationException::withMessages(['message_id' => __('messages.only_text_messages_can_be_edited')]);
+            }
+
+            $message->update(['body' => $body, 'edited_at' => now()]);
+            $message = $message->refresh()->load(['sender', 'replyTo.sender']);
+            broadcast(new MessageUpdated($message, 'message.edited'))->toOthers();
+
+            return $message;
+        });
+    }
+
+    public function delete(User $user, int $conversationId, int $messageId): void
+    {
+        DB::transaction(function () use ($user, $conversationId, $messageId) {
+            $conversation = $this->conversations->findForUser($user, $conversationId);
+            $message = $this->messages->findForConversation($conversation, $messageId);
+
+            if ($message->sender_id !== $user->id) {
+                throw ValidationException::withMessages(['message_id' => __('messages.message_action_not_allowed')]);
+            }
+
+            if ($message->attachment_path) {
+                Storage::disk('public')->delete($message->attachment_path);
+            }
+
+            $message->delete();
+            broadcast(new MessageUpdated($message, 'message.deleted'))->toOthers();
+        });
+    }
+
+    public function markDelivered(User $user, int $conversationId, int $messageId): Message
+    {
+        return $this->markMessageTimestamp($user, $conversationId, $messageId, 'delivered_at', 'message.delivered');
+    }
+
+    public function markSeen(User $user, int $conversationId, int $messageId): Message
+    {
+        return $this->markMessageTimestamp($user, $conversationId, $messageId, 'seen_at', 'message.seen');
+    }
+
+    public function typing(User $user, int $conversationId, bool $isTyping): TypingIndicator
+    {
+        $conversation = $this->conversations->findForUser($user, $conversationId);
+
+        $typing = TypingIndicator::updateOrCreate(
+            ['conversation_id' => $conversation->id, 'user_id' => $user->id],
+            ['is_typing' => $isTyping, 'updated_at' => now()]
+        );
+
+        broadcast(new TypingStatusChanged($typing))->toOthers();
+
+        return $typing;
+    }
+
+    private function markMessageTimestamp(User $user, int $conversationId, int $messageId, string $column, string $event): Message
+    {
+        return DB::transaction(function () use ($user, $conversationId, $messageId, $column, $event) {
+            $conversation = $this->conversations->findForUser($user, $conversationId);
+            $message = $this->messages->findForConversation($conversation, $messageId);
+
+            if ($message->sender_id === $user->id) {
+                throw ValidationException::withMessages(['message_id' => __('messages.message_action_not_allowed')]);
+            }
+
+            if (! $message->{$column}) {
+                $message->update([$column => now()]);
+            }
+
+            $message = $message->refresh()->load(['sender', 'replyTo.sender']);
+            broadcast(new MessageUpdated($message, $event))->toOthers();
+
+            return $message;
+        });
+    }
+}

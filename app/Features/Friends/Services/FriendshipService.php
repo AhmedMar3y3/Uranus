@@ -136,6 +136,19 @@ class FriendshipService
         return $this->friendships->friends($user, $perPage);
     }
 
+    public function requests(User $user, int $perPage): array
+    {
+        return [
+            'received' => $this->friendships->receivedPendingRequests($user, $perPage),
+            'sent' => $this->friendships->sentPendingRequests($user, $perPage),
+        ];
+    }
+
+    public function blockedUsers(User $user, int $perPage): LengthAwarePaginator
+    {
+        return $this->friendships->blockedBy($user, $perPage);
+    }
+
     public function areFriends(User $firstUser, User $secondUser): bool
     {
         return (bool) $this->friendships->acceptedBetween($firstUser, $secondUser);

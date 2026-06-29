@@ -16,7 +16,9 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('profile/me', [ProfileController::class, 'me'])->name('profile.me');
     Route::post('profile/complete', [ProfileController::class, 'complete'])->name('profile.complete');
+    Route::post('profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::get('home', [ConversationController::class, 'index'])->name('home');
 
@@ -27,6 +29,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('friends')->group(function () {
         Route::get('/', [FriendController::class, 'index'])->name('friends.index');
+        Route::get('/requests', [FriendController::class, 'requests'])->name('friends.requests');
+        Route::get('/blocked', [FriendController::class, 'blocked'])->name('friends.blocked');
         Route::post('/request' , [FriendController::class, 'send'])->name('friends.request');
         Route::post('/accept'  , [FriendController::class, 'accept'])->name('friends.accept');
         Route::post('/reject'  , [FriendController::class, 'reject'])->name('friends.reject');

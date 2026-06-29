@@ -69,4 +69,34 @@ class FriendshipRepository
             ->orderBy('username')
             ->paginate($perPage);
     }
+
+    public function receivedPendingRequests(User $user, int $perPage): LengthAwarePaginator
+    {
+        return Friendship::query()
+            ->with(['requester', 'addressee'])
+            ->where('addressee_id', $user->id)
+            ->where('status', FriendshipStatus::Pending)
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    public function sentPendingRequests(User $user, int $perPage): LengthAwarePaginator
+    {
+        return Friendship::query()
+            ->with(['requester', 'addressee'])
+            ->where('requester_id', $user->id)
+            ->where('status', FriendshipStatus::Pending)
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    public function blockedBy(User $user, int $perPage): LengthAwarePaginator
+    {
+        return Friendship::query()
+            ->with(['requester', 'addressee'])
+            ->where('blocked_by_id', $user->id)
+            ->where('status', FriendshipStatus::Blocked)
+            ->latest('updated_at')
+            ->paginate($perPage);
+    }
 }

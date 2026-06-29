@@ -22,6 +22,7 @@ class Message extends Model
         'attachment_name',
         'attachment_mime',
         'attachment_size',
+        'attachment_duration_seconds',
         'delivered_at',
         'seen_at',
         'edited_at',
@@ -32,6 +33,7 @@ class Message extends Model
         'delivered_at' => 'datetime',
         'seen_at' => 'datetime',
         'edited_at' => 'datetime',
+        'attachment_duration_seconds' => 'integer',
     ];
 
     public function conversation(): BelongsTo

@@ -22,6 +22,7 @@ class MessageResource extends JsonResource
                 'name' => $this->attachment_name,
                 'mime' => $this->attachment_mime,
                 'size' => $this->attachment_size,
+                'duration_seconds' => $this->attachment_duration_seconds,
             ] : null,
             'reply_to' => $this->reply_to_message_id ? new self($this->whenLoaded('replyTo', $this->replyTo)) : null,
             'delivered_at' => $this->delivered_at,

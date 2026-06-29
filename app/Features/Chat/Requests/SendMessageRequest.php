@@ -13,7 +13,8 @@ class SendMessageRequest extends BaseRequest
         return [
             'type' => ['required', Rule::enum(MessageType::class)],
             'body' => ['required_if:type,text', 'nullable', 'string', 'max:5000'],
-            'attachment' => ['required_if:type,image,file', 'nullable', 'file', 'max:10240'],
+            'attachment' => ['required_if:type,image,file,audio', 'nullable', 'file', 'max:10240'],
+            'duration_seconds' => ['nullable', 'integer', 'min:1', 'max:86400'],
             'reply_to_message_id' => ['nullable', 'integer', 'exists:messages,id'],
         ];
     }

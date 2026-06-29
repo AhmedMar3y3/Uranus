@@ -76,6 +76,7 @@ class ChatService
                 $payload['attachment_name'] = $attachment->getClientOriginalName();
                 $payload['attachment_mime'] = $attachment->getClientMimeType();
                 $payload['attachment_size'] = $attachment->getSize();
+                $payload['attachment_duration_seconds'] = $data['duration_seconds'] ?? null;
             }
 
             if (($payload['type'] === MessageType::Text->value) && ! $payload['body']) {

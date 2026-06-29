@@ -22,6 +22,7 @@ class ProfileResource extends JsonResource
             'online' => (bool) $this->is_online,
             'last_seen' => $this->last_seen_at,
             'friendship_status' => $this->friendship_status,
+            'completed_profile' => (bool) $this->completed_profile,
         ];
     }
 }

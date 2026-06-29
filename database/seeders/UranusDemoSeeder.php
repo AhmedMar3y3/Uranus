@@ -143,6 +143,13 @@ class UranusDemoSeeder extends Seeder
         $this->conversation($users['nova'], $users['atlas'], [
             [$users['atlas'], MessageType::Text, 'Testing delivered state on this one.', null, -65, true],
             [$users['nova'], MessageType::Text, 'Delivered and seen should look different in Flutter.', null, -60, true],
+            [$users['atlas'], MessageType::Audio, 'Short voice note for microphone UI testing.', [
+                'attachment_path' => 'demo/messages/voice-note.m4a',
+                'attachment_name' => 'voice-note.m4a',
+                'attachment_mime' => 'audio/mp4',
+                'attachment_size' => 98304,
+                'attachment_duration_seconds' => 14,
+            ], -10, true],
             [$users['atlas'], MessageType::Text, 'Got it. I am typing a longer response soon.', null, -2, false],
         ], true);
 
@@ -187,6 +194,7 @@ class UranusDemoSeeder extends Seeder
                 'attachment_name' => $attachment['attachment_name'] ?? null,
                 'attachment_mime' => $attachment['attachment_mime'] ?? null,
                 'attachment_size' => $attachment['attachment_size'] ?? null,
+                'attachment_duration_seconds' => $attachment['attachment_duration_seconds'] ?? null,
                 'delivered_at' => $createdAt->copy()->addMinute(),
                 'seen_at' => $seen ? $createdAt->copy()->addMinutes(2) : null,
                 'edited_at' => null,

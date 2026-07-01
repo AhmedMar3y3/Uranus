@@ -30,8 +30,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('friends')->group(function () {
         Route::get('/', [FriendController::class, 'index'])->name('friends.index');
-        Route::get('/requests', [FriendController::class, 'requests'])->name('friends.requests');
-        Route::get('/blocked', [FriendController::class, 'blocked'])->name('friends.blocked');
+        Route::get('/requests' , [FriendController::class, 'requests'])->name('friends.requests');
+        Route::get('/blocked'  , [FriendController::class, 'blocked'])->name('friends.blocked');
         Route::post('/request' , [FriendController::class, 'send'])->name('friends.request');
         Route::post('/accept'  , [FriendController::class, 'accept'])->name('friends.accept');
         Route::post('/reject'  , [FriendController::class, 'reject'])->name('friends.reject');

@@ -50,7 +50,7 @@ The admin dashboard is intentionally privacy-aware: it can list conversations an
 Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/AhmedMar3y3/Uranus
 cd Uranus
 ```
 

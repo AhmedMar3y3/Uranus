@@ -16,9 +16,11 @@ class UserService
     ) {
     }
 
-    public function search(?string $query, int $perPage): LengthAwarePaginator
+    public function search(User $viewer, ?string $query, int $perPage): LengthAwarePaginator
     {
-        return $this->users->search($query, $perPage);
+        $excludedUserIds = $this->friendships->discoveryExcludedUserIds($viewer);
+
+        return $this->users->search($query, $perPage, $viewer->id, $excludedUserIds);
     }
 
     public function profile(User $viewer, int $userId): User

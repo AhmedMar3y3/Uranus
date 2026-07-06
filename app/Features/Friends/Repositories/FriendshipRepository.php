@@ -99,4 +99,16 @@ class FriendshipRepository
             ->latest('updated_at')
             ->paginate($perPage);
     }
+
+    public function discoveryExcludedUserIds(User $user): Collection
+    {
+        return Friendship::query()
+            ->whereIn('status', [FriendshipStatus::Accepted, FriendshipStatus::Blocked])
+            ->where(function ($query) use ($user) {
+                $query->where('requester_id', $user->id)->orWhere('addressee_id', $user->id);
+            })
+            ->get()
+            ->map(fn (Friendship $friendship) => $friendship->requester_id === $user->id ? $friendship->addressee_id : $friendship->requester_id)
+            ->values();
+    }
 }

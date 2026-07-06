@@ -4,13 +4,16 @@ namespace App\Features\Users\Repositories;
 
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class UserRepository
 {
-    public function search(?string $query, int $perPage): LengthAwarePaginator
+    public function search(?string $query, int $perPage, int $authUserId, Collection $excludedUserIds): LengthAwarePaginator
     {
         return User::query()
             ->where('completed_profile', true)
+            ->where('id', '!=', $authUserId)
+            ->when($excludedUserIds->isNotEmpty(), fn ($builder) => $builder->whereNotIn('id', $excludedUserIds))
             ->when($query, function ($builder) use ($query) {
                 $builder->where(function ($inner) use ($query) {
                     $inner->where('username', 'like', "%{$query}%")

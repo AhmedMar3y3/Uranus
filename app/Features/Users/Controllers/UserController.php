@@ -18,6 +18,7 @@ class UserController extends ApiController
     public function index(SearchUsersRequest $request): JsonResponse
     {
         $users = $this->users->search(
+            $request->user(),
             $request->validated('q'),
             (int) ($request->validated('per_page') ?: 15)
         );

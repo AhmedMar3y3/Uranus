@@ -1,0 +1,37 @@
+name: Deploy Uranus Dashboard
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Uranus Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            cd "${{ secrets.APP_PATH }}"
+
+            git fetch --all
+            git reset --hard origin/main
+
+            composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+            php artisan config:clear || true
+            php artisan route:clear || true
+            php artisan view:clear || true
+            php artisan cache:clear || true
+
+            php artisan config:cache || true
+            php artisan route:cache || true
+            php artisan view:cache || true
+
+            php artisan migrate --force || true
+            php artisan queue:restart || true

@@ -9,12 +9,16 @@ class PresenceService
 {
     public function online(User $user): User
     {
+        $wasOnline = (bool) $user->is_online;
+
         $user->forceFill([
             'is_online' => true,
             'last_seen_at' => now(),
         ])->save();
 
-        broadcast(new PresenceStatusChanged($user))->toOthers();
+        if (! $wasOnline) {
+            $this->broadcast($user);
+        }
 
         return $user->refresh();
     }
@@ -26,8 +30,26 @@ class PresenceService
             'last_seen_at' => now(),
         ])->save();
 
-        broadcast(new PresenceStatusChanged($user))->toOthers();
+        $this->broadcast($user);
 
         return $user->refresh();
+    }
+
+    public function markOfflineDueToTimeout(User $user): User
+    {
+        if (! $user->is_online) {
+            return $user;
+        }
+
+        $user->forceFill(['is_online' => false])->save();
+
+        $this->broadcast($user);
+
+        return $user->refresh();
+    }
+
+    private function broadcast(User $user): void
+    {
+        broadcast(new PresenceStatusChanged($user))->toOthers();
     }
 }

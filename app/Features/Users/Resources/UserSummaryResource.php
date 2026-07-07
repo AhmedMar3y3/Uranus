@@ -15,6 +15,8 @@ class UserSummaryResource extends JsonResource
             'username' => $this->username,
             'full_name' => $this->full_name,
             'image' => $this->image_path ? Storage::disk('public')->url($this->image_path) : null,
+            'public_key' => $this->public_key,
+            'key_id' => 'default',
             'online' => (bool) $this->is_online,
             'last_seen' => $this->last_seen_at,
         ];

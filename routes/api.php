@@ -20,6 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('profile/me', [ProfileController::class, 'me'])->name('profile.me');
     Route::post('profile/complete', [ProfileController::class, 'complete'])->name('profile.complete');
     Route::post('profile/update', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('profile/public-key', [ProfileController::class, 'updatePublicKey'])->name('profile.public-key.update');
 
     Route::get('home', [ConversationController::class, 'index'])->name('home');
 

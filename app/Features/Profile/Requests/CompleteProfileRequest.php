@@ -23,6 +23,13 @@ class CompleteProfileRequest extends BaseRequest
             'gender' => ['nullable', Rule::enum(Gender::class)],
             'bio' => ['nullable', 'string', 'max:500'],
             'image' => ['nullable', 'image', 'max:5120'],
+            'public_key' => [
+                'nullable',
+                'string',
+                'min:32',
+                'max:10000',
+                'not_regex:/-----BEGIN\s+(RSA\s+|EC\s+|OPENSSH\s+)?PRIVATE\s+KEY-----/i',
+            ],
         ];
     }
 }

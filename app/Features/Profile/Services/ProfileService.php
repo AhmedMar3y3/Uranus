@@ -36,6 +36,13 @@ class ProfileService
         return $user;
     }
 
+    public function updatePublicKey(User $user, string $publicKey): User
+    {
+        // Security boundary: the backend stores only the user's public key.
+        // Private keys must stay on the Flutter device keystore/keychain.
+        return $this->currentUserProfile($this->profiles->updatePublicKey($user, $publicKey));
+    }
+
     private function saveProfile(User $user, array $data): User
     {
         return DB::transaction(function () use ($user, $data) {

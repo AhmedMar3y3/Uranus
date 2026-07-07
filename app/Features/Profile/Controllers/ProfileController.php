@@ -3,6 +3,7 @@
 namespace App\Features\Profile\Controllers;
 
 use App\Features\Profile\Requests\CompleteProfileRequest;
+use App\Features\Profile\Requests\UpdatePublicKeyRequest;
 use App\Features\Profile\Requests\UpdateProfileRequest;
 use App\Features\Profile\Services\ProfileService;
 use App\Features\Users\Resources\ProfileResource;
@@ -34,5 +35,12 @@ class ProfileController extends ApiController
         $user = $this->profiles->update($request->user(), $request->validated());
 
         return $this->successWithDataResponse(new ProfileResource($user), __('messages.profile_updated_successfully'), null, 'user');
+    }
+
+    public function updatePublicKey(UpdatePublicKeyRequest $request): JsonResponse
+    {
+        $user = $this->profiles->updatePublicKey($request->user(), $request->validated('public_key'));
+
+        return $this->successWithDataResponse(new ProfileResource($user), __('messages.updated_successfully'), null, 'user');
     }
 }

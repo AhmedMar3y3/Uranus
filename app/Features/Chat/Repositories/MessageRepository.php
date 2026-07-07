@@ -12,7 +12,7 @@ class MessageRepository
     public function paginate(Conversation $conversation, int $perPage): LengthAwarePaginator
     {
         return $conversation->messages()
-            ->with(['sender', 'replyTo.sender'])
+            ->with(['conversation', 'sender', 'replyTo.sender', 'replyTo.conversation'])
             ->latest('id')
             ->paginate($perPage);
     }
@@ -25,6 +25,7 @@ class MessageRepository
     public function findForConversation(Conversation $conversation, int $messageId): Message
     {
         return Message::query()
+            ->with('conversation')
             ->where('conversation_id', $conversation->id)
             ->findOrFail($messageId);
     }

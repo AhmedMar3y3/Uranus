@@ -11,12 +11,26 @@ class MessageResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $conversation = $this->resource->relationLoaded('conversation') ? $this->conversation : null;
+        $receiverId = null;
+
+        if ($conversation) {
+            $receiverId = $conversation->user_one_id === $this->sender_id
+                ? $conversation->user_two_id
+                : $conversation->user_one_id;
+        }
+
         return [
             'id' => $this->id,
             'conversation_id' => $this->conversation_id,
+            'sender_id' => $this->sender_id,
+            'receiver_id' => $receiverId,
             'sender' => new UserSummaryResource($this->whenLoaded('sender', $this->sender)),
             'type' => $this->type?->value,
-            'body' => $this->body,
+            'ciphertext' => $this->ciphertext,
+            'nonce' => $this->nonce,
+            'key_id' => $this->key_id,
+            'encryption_version' => $this->encryption_version,
             'attachment' => $this->attachment_path ? [
                 'url' => Storage::disk('public')->url($this->attachment_path),
                 'name' => $this->attachment_name,

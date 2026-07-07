@@ -28,6 +28,7 @@ class User extends Authenticatable
         'gender',
         'bio',
         'image_path',
+        'public_key',
         'is_online',
         'last_seen_at',
         'email_login_otp_hash',

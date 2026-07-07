@@ -33,7 +33,7 @@ class MessageController extends ApiController
 
     public function update(EditMessageRequest $request, int $conversation, int $message): JsonResponse
     {
-        $message = $this->chat->edit($request->user(), $conversation, $message, $request->validated('body'));
+        $message = $this->chat->edit($request->user(), $conversation, $message, $request->validated());
 
         return $this->successWithDataResponse(new MessageResource($message), __('messages.updated_successfully'), null, 'message');
     }

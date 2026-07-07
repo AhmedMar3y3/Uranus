@@ -14,4 +14,12 @@ class ProfileRepository
 
         return $user->refresh();
     }
+
+    public function updatePublicKey(User $user, string $publicKey): User
+    {
+        $user->public_key = $publicKey;
+        $user->save();
+
+        return $user->refresh();
+    }
 }

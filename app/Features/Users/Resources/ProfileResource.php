@@ -17,6 +17,8 @@ class ProfileResource extends JsonResource
             'full_name' => $this->full_name,
             'bio' => $this->bio,
             'gender' => $this->gender?->value,
+            'public_key' => $this->public_key,
+            'key_id' => 'default',
             'friends_count' => $this->friends_count ?? 0,
             'mutual_friends_count' => $this->mutual_friends_count ?? 0,
             'online' => (bool) $this->is_online,

@@ -30,7 +30,7 @@ class MessageSent implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'message' => (new MessageResource($this->message->loadMissing(['sender', 'replyTo.sender'])))->toArray(request()),
+            'message' => (new MessageResource($this->message->loadMissing(['conversation', 'sender', 'replyTo.sender', 'replyTo.conversation'])))->toArray(request()),
         ];
     }
 }

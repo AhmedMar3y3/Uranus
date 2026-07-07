@@ -11,7 +11,7 @@ class ConversationRepository
     public function forUser(User $user, int $perPage): LengthAwarePaginator
     {
         return Conversation::query()
-            ->with(['userOne', 'userTwo', 'lastMessage.sender'])
+            ->with(['userOne', 'userTwo', 'lastMessage.conversation', 'lastMessage.sender'])
             ->where(function ($query) use ($user) {
                 $query->where('user_one_id', $user->id)->orWhere('user_two_id', $user->id);
             })

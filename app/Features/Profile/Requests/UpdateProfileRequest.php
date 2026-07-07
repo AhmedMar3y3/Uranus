@@ -23,6 +23,14 @@ class UpdateProfileRequest extends BaseRequest
             'gender' => ['sometimes', 'nullable', Rule::enum(Gender::class)],
             'bio' => ['sometimes', 'nullable', 'string', 'max:500'],
             'image' => ['sometimes', 'nullable', 'image', 'max:5120'],
+            'public_key' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'min:32',
+                'max:10000',
+                'not_regex:/-----BEGIN\s+(RSA\s+|EC\s+|OPENSSH\s+)?PRIVATE\s+KEY-----/i',
+            ],
         ];
     }
 }

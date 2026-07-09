@@ -9,6 +9,16 @@ use App\Features\Admin\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 
+Route::get('/download', function () {
+    $apkPath = public_path('uranus.apk');
+
+    return view('download', [
+        'apkSize' => file_exists($apkPath)
+            ? number_format(filesize($apkPath) / 1024 / 1024, 1) . ' MB'
+            : null,
+    ]);
+})->name('download');
+
 Route::redirect('/', '/admin');
 Route::redirect('/home', '/admin')->name('home');
 Route::redirect('/login', '/admin/login')->name('login');

@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,6 +8,7 @@
     <title>{{ $title ?? 'Uranus Admin' }}</title>
     @vite(['resources/css/admin.css', 'resources/js/admin.js'])
 </head>
+
 <body>
     <div class="admin-shell">
         <aside class="sidebar">
@@ -24,6 +26,8 @@
                 <a href="{{ route('admin.users.index') }}" @class(['active' => request()->routeIs('admin.users.*')])>Users</a>
                 <a href="{{ route('admin.conversations.index') }}" @class(['active' => request()->routeIs('admin.conversations.*')])>Conversations</a>
                 <a href="{{ route('admin.friendships.index') }}" @class(['active' => request()->routeIs('admin.friendships.*')])>Friendships</a>
+                <a href="{{ route('download') }}" target="_blank" rel="noreferrer">Download page <span
+                        aria-hidden="true">↗</span></a>
             </nav>
         </aside>
 
@@ -33,10 +37,14 @@
                     <p class="eyebrow">Admin dashboard</p>
                     <h1>{{ $heading ?? 'Uranus' }}</h1>
                 </div>
-                <form method="POST" action="{{ route('admin.logout') }}">
-                    @csrf
-                    <button class="ghost-button" type="submit">Sign out</button>
-                </form>
+                <div class="topbar-actions">
+                    <a class="ghost-button" href="{{ route('download') }}" target="_blank" rel="noreferrer">View
+                        website</a>
+                    <form method="POST" action="{{ route('admin.logout') }}">
+                        @csrf
+                        <button class="ghost-button" type="submit">Sign out</button>
+                    </form>
+                </div>
             </header>
 
             @include('admin.partials.feedback')
@@ -45,4 +53,5 @@
         </main>
     </div>
 </body>
+
 </html>

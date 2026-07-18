@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,6 +8,7 @@
     <title>Download Uranus</title>
     @vite('resources/css/app.css')
 </head>
+
 <body class="download-page">
     <main class="download-shell">
         <section class="download-hero" aria-labelledby="download-title">
@@ -28,12 +30,21 @@
                 </p>
 
                 <div class="hero-actions">
-                    <a class="download-button" href="{{ asset('uranus.apk') }}" download>
-                        <span class="button-glow"></span>
-                        Install APK
-                    </a>
+                    @if ($apkAvailable)
+                        <a class="download-button" href="{{ route('apk.download') }}">
+                            <span class="button-glow"></span>
+                            Download APK
+                        </a>
+                    @else
+                        <span class="download-button is-disabled" aria-disabled="true">Coming soon</span>
+                    @endif
                     @if ($apkSize)
-                        <span class="apk-meta">Android package · {{ $apkSize }}</span>
+                        <span class="apk-meta">
+                            Android package &middot; {{ $apkSize }}
+                            @if ($release?->version)
+                                &middot; v{{ $release->version }}
+                            @endif
+                        </span>
                     @endif
                 </div>
             </div>
@@ -77,4 +88,5 @@
         </section>
     </main>
 </body>
+
 </html>

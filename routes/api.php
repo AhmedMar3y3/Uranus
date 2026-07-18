@@ -2,24 +2,26 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Features\Auth\Controllers\AuthController;
-use App\Features\Chat\Controllers\ConversationController;
+use App\Features\Users\Controllers\UserController;
 use App\Features\Chat\Controllers\MessageController;
 use App\Features\Friends\Controllers\FriendController;
-use App\Features\Notifications\Controllers\DeviceTokenController;
-use App\Features\Presence\Controllers\PresenceController;
 use App\Features\Profile\Controllers\ProfileController;
-use App\Features\Users\Controllers\UserController;
+use App\Features\Presence\Controllers\PresenceController;
+use App\Features\Chat\Controllers\ConversationController;
+use App\Features\Settings\Controllers\AppVersionController;
+use App\Features\Notifications\Controllers\DeviceTokenController;
 
+Route::get('app/version', AppVersionController::class)->name('app.version.check');
 
 Route::prefix('auth')->group(function () {
-    Route::post('otp', [AuthController::class, 'sendOtp'])->name('auth.otp.send');
+    Route::post('otp'       , [AuthController::class, 'sendOtp'])->name('auth.otp.send');
     Route::post('otp/verify', [AuthController::class, 'verifyOtp'])->name('auth.otp.verify');
 });
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('profile/me', [ProfileController::class, 'me'])->name('profile.me');
-    Route::post('profile/complete', [ProfileController::class, 'complete'])->name('profile.complete');
-    Route::post('profile/update', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('profile/me'         , [ProfileController::class, 'me'])->name('profile.me');
+    Route::post('profile/complete'  , [ProfileController::class, 'complete'])->name('profile.complete');
+    Route::post('profile/update'    , [ProfileController::class, 'update'])->name('profile.update');
     Route::post('profile/public-key', [ProfileController::class, 'updatePublicKey'])->name('profile.public-key.update');
 
     Route::get('home', [ConversationController::class, 'index'])->name('home');
@@ -63,7 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::prefix('devices')->group(function () {
-        Route::post('/fcm-token', [DeviceTokenController::class, 'store'])->name('devices.fcm-token.store');
+        Route::post('/fcm-token'  , [DeviceTokenController::class, 'store'])->name('devices.fcm-token.store');
         Route::delete('/fcm-token', [DeviceTokenController::class, 'destroy'])->name('devices.fcm-token.destroy');
     });
 });
